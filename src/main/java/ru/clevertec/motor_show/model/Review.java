@@ -1,25 +1,36 @@
 package ru.clevertec.motor_show.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
+@Builder
+@Indexed
 @Entity
 @Table(name = "reviews")
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String text;
-    private int rating;
 
+    @FullTextField(analyzer = "standard")
+    private String reviewText;
+
+    @GenericField
+    private int rank;
     @ManyToOne
-    @JoinColumn(name = "client_id")
     private Client client;
-
     @ManyToOne
-    @JoinColumn(name = "car_id")
-    private Car car;
+    @JoinColumn(name = "cars_id")
+    private Car cars;
+    @ManyToOne
+    @JoinColumn(name = "clients_id")
+    private Client clients;
 }

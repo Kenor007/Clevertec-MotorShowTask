@@ -1,13 +1,13 @@
 package ru.clevertec.motor_show.service;
 
-import ru.clevertec.motor_show.model.Car;
-import ru.clevertec.motor_show.model.Client;
-import ru.clevertec.motor_show.model.Review;
-
-import java.util.List;
-
 public interface ReviewService {
-    void addReview(Client client, Car car, String text, int rating);
+    void addReview(Long clientId, Long cardId);
 
-    List<Review> searchReviews(String keyword);
+    void deleteReview(Long id);
+
+    void updateReview(Long id);
+
+    void searchReviewsByKeywords(String keywords);
+
+    void searchReviews(String keywords, Integer minRank, Integer maxRank);
 }

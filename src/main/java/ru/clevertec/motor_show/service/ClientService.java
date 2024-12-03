@@ -1,10 +1,13 @@
 package ru.clevertec.motor_show.service;
 
-import ru.clevertec.motor_show.model.Car;
 import ru.clevertec.motor_show.model.Client;
 
 public interface ClientService {
-    void addClient(Client client);
+    void createClient();
 
-    void buyCar(Client client, Car car);
+    void updateClient(Client clientUpdate, Long id);
+
+    void deleteClient(Long id);
+
+    void buyCar(Long clientId, Long carId);
 }

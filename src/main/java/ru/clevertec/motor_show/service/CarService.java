@@ -1,14 +1,31 @@
 package ru.clevertec.motor_show.service;
 
+import ru.clevertec.motor_show.enums.car.CarBrand;
+import ru.clevertec.motor_show.enums.category.CarCategory;
 import ru.clevertec.motor_show.model.Car;
 import ru.clevertec.motor_show.model.CarShowroom;
 
-import java.util.List;
+import java.time.LocalDate;
 
 public interface CarService {
-    void addCar(Car car);
+    void findCarById(Long id);
 
-    List<Car> findCarsByFilters(String brand, String category, int year, double minPrice, double maxPrice);
+    void findCarByParams(CarBrand carBrand,
+                         LocalDate yearOfProduction,
+                         CarCategory category,
+                         String price);
 
-    void assignCarToShowroom(Car car, CarShowroom showroom);
+    void findCarsSortedByPriceAsc();
+
+    void findCarsSortedByPriceDesc();
+
+    void findAllCars(int pageNumber, int pageSize);
+
+    void addCar();
+
+    void updateCar(Car car, long id);
+
+    void deleteCarById(Long id);
+
+    void addCarToShowroom(Car car, CarShowroom showroom);
 }
