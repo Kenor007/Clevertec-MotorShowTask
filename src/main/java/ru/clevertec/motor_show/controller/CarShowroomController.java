@@ -1,6 +1,5 @@
 package ru.clevertec.motor_show.controller;
 
-import ru.clevertec.motor_show.factory.CarShowroomFactory;
 import ru.clevertec.motor_show.service.CarShowroomService;
 import ru.clevertec.motor_show.service.impl.CarShowroomServiceImpl;
 

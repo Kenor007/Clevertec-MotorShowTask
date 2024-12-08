@@ -31,7 +31,7 @@ public class ClientServiceImpl implements ClientService {
             Transaction tx = session.beginTransaction();
             Client client = session.get(Client.class, id);
             client.setName(clientUpdate.getName());
-            client.setContact(clientUpdate.getContact());
+            client.setContacts(clientUpdate.getContacts());
             session.update(client);
             tx.commit();
         } catch (Exception e) {
@@ -62,7 +62,7 @@ public class ClientServiceImpl implements ClientService {
             List<Car> cars = List.of(car);
             List<Client> clients = List.of(client);
             client.setCars(cars);
-            car.setClientas(clients);
+            car.setClients(clients);
             session.update(client);
             session.update(car);
 

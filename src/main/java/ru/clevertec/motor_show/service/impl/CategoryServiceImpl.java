@@ -62,7 +62,7 @@ public class CategoryServiceImpl implements CategoryService {
                     throw new IllegalArgumentException("Car with ID " + carId + " not found.");
                 }
 
-                car.setCategories(category);
+                car.setCategory(category);
                 category.getCars().add(car);
 
                 session.update(car);

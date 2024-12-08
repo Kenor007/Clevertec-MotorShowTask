@@ -8,7 +8,11 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
 import org.hibernate.search.mapper.orm.session.SearchSession;
-import ru.clevertec.motor_show.model.*;
+import ru.clevertec.motor_show.model.Car;
+import ru.clevertec.motor_show.model.CarShowroom;
+import ru.clevertec.motor_show.model.Category;
+import ru.clevertec.motor_show.model.Client;
+import ru.clevertec.motor_show.model.Review;
 
 @UtilityClass
 public class HibernateUtil {

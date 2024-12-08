@@ -1,18 +1,23 @@
 package ru.clevertec.motor_show.service.impl;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.clevertec.motor_show.dto.CarRequestDto;
+import ru.clevertec.motor_show.dto.CarResponseDto;
 import ru.clevertec.motor_show.enums.car.CarBrand;
 import ru.clevertec.motor_show.enums.category.CarCategory;
 import ru.clevertec.motor_show.factory.CarFactory;
 import ru.clevertec.motor_show.model.Car;
 import ru.clevertec.motor_show.model.CarShowroom;
+import ru.clevertec.motor_show.repository.CarRepository;
 import ru.clevertec.motor_show.service.CarService;
 import ru.clevertec.motor_show.util.HibernateUtil;
 
@@ -20,9 +25,11 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-
+@Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CarServiceImpl implements CarService {
+    private final CarRepository carRepository;
     @Override
     public void findCarById(Long id) {
         try (Session session = HibernateUtil.getSession()) {
@@ -60,7 +67,7 @@ public class CarServiceImpl implements CarService {
 
             cars.forEach(car -> System.out.println(car.getBrandCar() +
                     " " + car.getYearOfProduction() +
-                    " " + car.getCategories().getCarCategory() +
+                    " " + car.getCategory().getCarCategory() +
                     " " + car.getPrice()));
             tx.commit();
         } catch (HibernateException e) {
@@ -126,7 +133,7 @@ public class CarServiceImpl implements CarService {
             List<Car> cars = query.list();
 
             cars.forEach(car ->
-                    System.out.println(car.getBrandCar() + " - " + car.getCategories().getCarCategory())
+                    System.out.println(car.getBrandCar() + " - " + car.getCategory().getCarCategory())
             );
 
             session.getTransaction().commit();
@@ -136,7 +143,7 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public void addCar() {
+    public CarResponseDto addCar(CarRequestDto carRequestDto) {
         try (Session session = HibernateUtil.getSession()) {
             Transaction tx = session.beginTransaction();
             Car car = CarFactory.getCar();
@@ -146,6 +153,7 @@ public class CarServiceImpl implements CarService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     @Override
@@ -190,5 +198,10 @@ public class CarServiceImpl implements CarService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public List<Car> findAllCars() {
+        return carRepository.findAll();
     }
 }

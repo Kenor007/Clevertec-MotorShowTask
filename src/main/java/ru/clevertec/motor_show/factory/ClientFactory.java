@@ -14,7 +14,7 @@ public class ClientFactory {
         cantacts.add("Pobediteley st 6");
         return Client.builder()
                 .name("Max")
-                .contact(cantacts)
+                .contacts(cantacts)
                 .dateOfRegistration(LocalDate.now())
                 .build();
     }

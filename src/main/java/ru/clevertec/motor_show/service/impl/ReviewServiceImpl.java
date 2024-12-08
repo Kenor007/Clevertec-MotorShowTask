@@ -27,7 +27,7 @@ public class ReviewServiceImpl implements ReviewService {
             Review review = ReviewFactory.createReview();
             Car car = session.get(Car.class, carId);
             Client client = session.get(Client.class, clientId);
-            review.setCars(car);
+            review.setCar(car);
             review.setClient(client);
             session.save(review);
             tx.commit();
