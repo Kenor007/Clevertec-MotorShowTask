@@ -1,207 +1,100 @@
 package ru.clevertec.motor_show.service.impl;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.HibernateException;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import org.hibernate.query.Query;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.clevertec.motor_show.dto.CarRequestDto;
 import ru.clevertec.motor_show.dto.CarResponseDto;
-import ru.clevertec.motor_show.enums.car.CarBrand;
-import ru.clevertec.motor_show.enums.category.CarCategory;
-import ru.clevertec.motor_show.factory.CarFactory;
+import ru.clevertec.motor_show.error_handling.exception.CarNotFoundException;
+import ru.clevertec.motor_show.error_handling.exception.CarShowroomNotFoundException;
+import ru.clevertec.motor_show.mapper.CarMapper;
 import ru.clevertec.motor_show.model.Car;
 import ru.clevertec.motor_show.model.CarShowroom;
 import ru.clevertec.motor_show.repository.CarRepository;
+import ru.clevertec.motor_show.repository.CarShowroomRepository;
 import ru.clevertec.motor_show.service.CarService;
-import ru.clevertec.motor_show.util.HibernateUtil;
 
-import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
+
+import static ru.clevertec.motor_show.constant.ExceptionAnswer.CAR_NOT_FOUND;
+import static ru.clevertec.motor_show.constant.ExceptionAnswer.CAR_SHOWROOM_NOT_FOUND;
+
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
+@Slf4j
 public class CarServiceImpl implements CarService {
     private final CarRepository carRepository;
-    @Override
-    public void findCarById(Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            session.beginTransaction();
-            Car car = session.get(Car.class, id);
-            System.out.println(car);
-            tx.commit();
-        } catch (HibernateException e) {
-            e.printStackTrace();
-        }
-    }
+    private final CarShowroomRepository carShowroomRepository;
+    private final CarMapper carMapper;
 
     @Override
-    public void findCarByParams(CarBrand brandCar, LocalDate yearOfProduction, CarCategory category, String price) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            String[] priceBounds = (Objects.nonNull(price) && price.contains("-")) ? price.split("-") : null;
-            String minPrice = (Objects.nonNull(priceBounds) && priceBounds.length > 0) ? priceBounds[0] : null;
-            String maxPrice = (Objects.nonNull(priceBounds) && priceBounds.length > 1) ? priceBounds[1] : null;
-
-            String hql = "FROM Car c WHERE c.brandCar = :brandCar " +
-                    "AND c.yearOfProduction = :yearOfProduction " +
-                    "AND c.categories.carCategory = :category " +
-                    "AND CAST(c.price AS DOUBLE) BETWEEN :minPrice AND :maxPrice";
-
-            Query<Car> carQuery = session.createQuery(hql, Car.class);
-            carQuery.setParameter("brandCar", brandCar);
-            carQuery.setParameter("yearOfProduction", yearOfProduction);
-            carQuery.setParameter("category", category);
-            carQuery.setParameter("minPrice", Double.parseDouble(minPrice));
-            carQuery.setParameter("maxPrice", Double.parseDouble(maxPrice));
-
-            List<Car> cars = carQuery.getResultList();
-
-            cars.forEach(car -> System.out.println(car.getBrandCar() +
-                    " " + car.getYearOfProduction() +
-                    " " + car.getCategory().getCarCategory() +
-                    " " + car.getPrice()));
-            tx.commit();
-        } catch (HibernateException e) {
-            e.printStackTrace();
-        }
+    @Transactional
+    public CarResponseDto createCar(CarRequestDto carRequestDto) {
+        Car car = carMapper.carRequestDtotoCar(carRequestDto);
+        Car savedCar = carRepository.save(car);
+        log.debug("Car with id {} is saved", savedCar.getId());
+        return carMapper.carToCarResponseDto(savedCar);
     }
 
-    public void findCarsSortedByPriceAsc() {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<Car> criteriaQuery = criteriaBuilder.createQuery(Car.class);
-            Root<Car> root = criteriaQuery.from(Car.class);
-
-            List<Car> cars = session.createQuery(criteriaQuery).getResultList();
-
-            List<Car> sortedCars = cars.stream()
-                    .filter(car -> car.getPrice() != null && car.getPrice().matches("[0-9.]+"))
-                    .sorted(Comparator.comparingDouble(car -> Double.parseDouble(car.getPrice())))
-                    .toList();
-
-            sortedCars.forEach(car -> System.out.println("Car: " + car.getBrandCar() + " " + car.getModel() + ", Price: " + car.getPrice()));
-            tx.commit();
-        } catch (HibernateException e) {
-            e.printStackTrace();
-        }
+    @Override
+    @Transactional(readOnly = true)
+    public CarResponseDto findCarById(Long id) {
+        Car car = findCarByIdOrThrow(id);
+        log.debug("Car with id {} is found", car.getId());
+        return carMapper.carToCarResponseDto(car);
     }
 
-    public void findCarsSortedByPriceDesc() {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<Car> criteriaQuery = criteriaBuilder.createQuery(Car.class);
-            Root<Car> root = criteriaQuery.from(Car.class);
+    @Override
+    @Transactional(readOnly = true)
+    public List<CarResponseDto> findAllCars() {
+        List<Car> cars = carRepository.findAll();
+        if (cars.isEmpty()) {
+            log.debug("List of cars is empty");
+        }
+        log.debug("List of cars has been found");
+        return cars.stream().map(carMapper::carToCarResponseDto).toList();
+    }
 
-            List<Car> cars = session.createQuery(criteriaQuery).getResultList();
+    @Override
+    @Transactional
+    public CarResponseDto updateCar(CarRequestDto carRequestDto, Long id) {
+        Car car = findCarByIdOrThrow(id);
+        Optional.ofNullable(carRequestDto.getModel()).ifPresent(car::setModel);
+        Optional.ofNullable(carRequestDto.getYearOfProduction()).ifPresent(car::setYearOfProduction);
+        Optional.ofNullable(carRequestDto.getBrandCar()).ifPresent(car::setBrandCar);
+        Optional.ofNullable(carRequestDto.getPrice()).ifPresent(car::setPrice);
+        Car savedCar = carRepository.save(car);
+        return carMapper.carToCarResponseDto(savedCar);
+    }
 
-            List<Car> sortedCars = cars.stream()
-                    .filter(car -> car.getPrice() != null && car.getPrice().matches("[0-9.]+"))
-                    .sorted((car1, car2) -> Double.compare(Double.parseDouble(car2.getPrice()), Double.parseDouble(car1.getPrice())))
-                    .toList();
-
-            sortedCars.forEach(car -> System.out.println("Car: " + car.getBrandCar() + " " + car.getModel() + ", Price: " + car.getPrice()));
-
-            tx.commit();
-        } catch (HibernateException e) {
-            e.printStackTrace();
+    @Override
+    @Transactional
+    public void deleteCar(Long id) {
+        if (carRepository.existsById(id)) {
+            Car deletedCar = findCarByIdOrThrow(id);
+            carRepository.deleteById(id);
+            log.debug("Car with id {} is deleted", id);
+        } else {
+            log.error("Car with id {} not found", id);
+            throw new CarNotFoundException(String.format(CAR_NOT_FOUND, id));
         }
     }
 
     @Override
-    public void findAllCars(int pageNumber, int pageSize) {
-        try (Session session = HibernateUtil.getSession()) {
-            session.beginTransaction();
-
-            String hql = "SELECT DISTINCT c FROM Car c " +
-                    "JOIN FETCH c.categories " +
-                    "JOIN FETCH c.showroom";
-            Query<Car> query = session.createQuery(hql, Car.class);
-            query.setFirstResult((pageNumber - 1) * pageSize);
-            query.setMaxResults(pageSize);
-
-            List<Car> cars = query.list();
-
-            cars.forEach(car ->
-                    System.out.println(car.getBrandCar() + " - " + car.getCategory().getCarCategory())
-            );
-
-            session.getTransaction().commit();
-        } catch (HibernateException e) {
-            e.printStackTrace();
-        }
+    @Transactional
+    public void assignCarToShowroom(Long carId, Long showroomId) {
+        findCarByIdOrThrow(carId);
+        CarShowroom showroom = carShowroomRepository.findById(showroomId)
+                .orElseThrow(() -> new CarShowroomNotFoundException(String.format(CAR_SHOWROOM_NOT_FOUND, showroomId)));
+        carRepository.assignCarToShowroom(carId, showroom);
     }
 
-    @Override
-    public CarResponseDto addCar(CarRequestDto carRequestDto) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Car car = CarFactory.getCar();
-            session.save(car);
-            tx.commit();
-            System.out.println("Individual Client saved with ID: " + car.getId());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public void updateCar(Car carUpdate, long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-
-            Car car = session.get(Car.class, id);
-
-            car.setModel(carUpdate.getModel());
-            car.setBrandCar(carUpdate.getBrandCar());
-            car.setYearOfProduction(carUpdate.getYearOfProduction());
-            car.setPrice(carUpdate.getPrice());
-
-            session.update(car);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void deleteCarById(Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Car car = session.find(Car.class, id);
-            session.delete(car);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void addCarToShowroom(Car car, CarShowroom showroom) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Car carAssign = session.get(Car.class, car.getId());
-            carAssign.setShowroom(showroom);
-            session.update(carAssign);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public List<Car> findAllCars() {
-        return carRepository.findAll();
+    private Car findCarByIdOrThrow(Long carId) {
+        return carRepository.findById(carId).orElseThrow(() -> {
+            log.error("Car with id {} not found", carId);
+            return new CarNotFoundException(String.format(CAR_NOT_FOUND, carId));
+        });
     }
 }

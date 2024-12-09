@@ -1,25 +1,56 @@
 package ru.clevertec.motor_show.controller;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.clevertec.motor_show.dto.CategoryRequestDto;
+import ru.clevertec.motor_show.dto.CategoryResponseDto;
+import ru.clevertec.motor_show.error_handling.exception.CategoryNotFoundException;
 import ru.clevertec.motor_show.service.CategoryService;
-import ru.clevertec.motor_show.service.impl.CategoryServiceImpl;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+@RestController
+@RequestMapping("/showrooms")
+@RequiredArgsConstructor
+@Validated
+@Slf4j
 public class CategoryController {
-    public static void main(String[] args) {
-        CategoryService categoryService = new CategoryServiceImpl();
+    private final CategoryService categoryService;
 
-        //add category
-//        categoryService.addCategory();
-
-        //delete category
-//        categoryService.deleteCategory(1l);
-
-        //update category
-//        categoryService.updateCategory(CategoryFactory.getCategory(), 2L);
-
-        //add category in car
-        List<Long> listCarIdJoinWitnCategoryId = List.of(10L);
-        categoryService.linkCategoryWithCars(2l, listCarIdJoinWitnCategoryId);
+    @PostMapping
+    public CategoryResponseDto createCategory(@Validated @RequestBody CategoryRequestDto categoryRequestDto) {
+        return categoryService.createCategory(categoryRequestDto);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        try {
+            categoryService.deleteCategory(id);
+            return ResponseEntity.ok("Category successfully deleted with id: " + id);
+        } catch (CategoryNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found with id: " + id);
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
+                                                      @Validated @RequestBody CategoryRequestDto categoryRequestDto) {
+        CategoryResponseDto categoryResponseDto = categoryService.updateCategory(categoryRequestDto, id);
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Category successfully updated.");
+        response.put("updatedCategory", categoryResponseDto);
+        return ResponseEntity.ok(response);
+    }
+
 }

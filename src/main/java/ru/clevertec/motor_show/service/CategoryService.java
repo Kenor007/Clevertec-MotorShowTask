@@ -1,15 +1,12 @@
 package ru.clevertec.motor_show.service;
 
-import ru.clevertec.motor_show.model.Category;
-
-import java.util.List;
+import ru.clevertec.motor_show.dto.CategoryRequestDto;
+import ru.clevertec.motor_show.dto.CategoryResponseDto;
 
 public interface CategoryService {
-    void addCategory();
+    CategoryResponseDto createCategory(CategoryRequestDto categoryRequestDto);
 
     void deleteCategory(Long id);
 
-    void updateCategory(Category category, Long id);
-
-    void linkCategoryWithCars(Long categoryId, List<Long> carIds);
+    CategoryResponseDto updateCategory(CategoryRequestDto categoryRequestDto, Long id);
 }

@@ -8,6 +8,4 @@ public interface ReviewService {
     void updateReview(Long id);
 
     void searchReviewsByKeywords(String keywords);
-
-    void searchReviews(String keywords, Integer minRank, Integer maxRank);
 }

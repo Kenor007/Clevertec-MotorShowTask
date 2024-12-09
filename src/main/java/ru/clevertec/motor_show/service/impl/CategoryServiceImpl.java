@@ -1,77 +1,64 @@
 package ru.clevertec.motor_show.service.impl;
 
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import ru.clevertec.motor_show.factory.CategoryFactory;
-import ru.clevertec.motor_show.model.Car;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.clevertec.motor_show.dto.CategoryRequestDto;
+import ru.clevertec.motor_show.dto.CategoryResponseDto;
+import ru.clevertec.motor_show.enums.category.CarCategory;
+import ru.clevertec.motor_show.error_handling.exception.CategoryNotFoundException;
+import ru.clevertec.motor_show.mapper.CategoryMapper;
 import ru.clevertec.motor_show.model.Category;
+import ru.clevertec.motor_show.repository.CategoryRepository;
 import ru.clevertec.motor_show.service.CategoryService;
-import ru.clevertec.motor_show.util.HibernateUtil;
 
-import java.util.List;
+import java.util.Optional;
 
+import static ru.clevertec.motor_show.constant.ExceptionAnswer.CATEGORY_NOT_FOUND;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class CategoryServiceImpl implements CategoryService {
+    private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
+
     @Override
-    public void addCategory() {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Category category = CategoryFactory.getCategory();
-            session.save(category);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public CategoryResponseDto createCategory(CategoryRequestDto categoryRequestDto) {
+        Category category = categoryMapper.categoryRequestDtoToCategory(categoryRequestDto);
+        Category savedCategory = categoryRepository.save(category);
+        log.debug("Category with id {} is saved", savedCategory.getId());
+        return categoryMapper.categoryToCategoryResponseDto(savedCategory);
     }
 
     @Override
     public void deleteCategory(Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            session.delete(session.get(Category.class, id));
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (categoryRepository.existsById(id)) {
+            Category deletedCategory = findCategoryByIdOrThrow(id);
+            categoryRepository.deleteById(id);
+            log.debug("Category with id {} is deleted", id);
+        } else {
+            log.error("Category with id {} not found", id);
+            throw new CategoryNotFoundException(String.format(CATEGORY_NOT_FOUND, id));
         }
     }
 
     @Override
-    public void updateCategory(Category categoryUpdate, Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Category category = session.get(Category.class, id);
-            category.setCarCategory(categoryUpdate.getCarCategory());
-            session.update(category);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public CategoryResponseDto updateCategory(CategoryRequestDto categoryRequestDto, Long id) {
+        Category category = findCategoryByIdOrThrow(id);
+        Optional.ofNullable(categoryRequestDto.getCarCategory())
+                .map(carCategory -> CarCategory.valueOf(carCategory.toUpperCase()))
+                .ifPresent(category::setCarCategory);
+        categoryRepository.save(category);
+        return categoryMapper.categoryToCategoryResponseDto(category);
     }
 
-    public void linkCategoryWithCars(Long categoryId, List<Long> carIds) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-
-            Category category = session.get(Category.class, categoryId);
-            if (category == null) {
-                throw new IllegalArgumentException("Category with ID " + categoryId + " not found.");
-            }
-
-            for (Long carId : carIds) {
-                Car car = session.get(Car.class, carId);
-                if (car == null) {
-                    throw new IllegalArgumentException("Car with ID " + carId + " not found.");
-                }
-
-                car.setCategory(category);
-                category.getCars().add(car);
-
-                session.update(car);
-            }
-
-            session.update(category);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private Category findCategoryByIdOrThrow(Long categoryId) {
+        return categoryRepository.findById(categoryId).orElseThrow(() -> {
+            log.error("Category with id {} not found", categoryId);
+            return new CategoryNotFoundException(String.format(CATEGORY_NOT_FOUND, categoryId));
+        });
     }
 }

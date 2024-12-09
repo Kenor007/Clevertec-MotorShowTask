@@ -1,17 +1,9 @@
 package ru.clevertec.motor_show.dto;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Convert;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import ru.clevertec.motor_show.enums.car.CarBrand;
 import ru.clevertec.motor_show.enums.car.CarBrandConverter;
 import ru.clevertec.motor_show.model.CarShowroom;
@@ -29,7 +21,9 @@ import java.util.List;
 public class CarResponseDto {
     private Long id;
     private String model;
+    @Convert(converter = CarBrandConverter.class)
     private CarBrand brandCar;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate yearOfProduction;
     private BigDecimal price;
     private CarShowroom showroom;
