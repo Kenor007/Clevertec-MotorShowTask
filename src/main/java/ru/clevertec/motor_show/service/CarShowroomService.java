@@ -1,13 +1,12 @@
 package ru.clevertec.motor_show.service;
 
-import ru.clevertec.motor_show.model.CarShowroom;
+import ru.clevertec.motor_show.dto.CarShowroomRequestDto;
+import ru.clevertec.motor_show.dto.CarShowroomResponseDto;
 
 public interface CarShowroomService {
-    void addCarShowroom();
+    CarShowroomResponseDto createCarShowroom(CarShowroomRequestDto carShowroomRequestDto);
 
-    void removeCarShowroom(Long id);
+    void delete(Long id);
 
-    void updateCarShowroom(CarShowroom carShowroom, Long id);
-
-    void findAllCarShowrooms();
+    CarShowroomResponseDto updateCarShowroom(CarShowroomRequestDto carShowroomRequestDto, Long id);
 }

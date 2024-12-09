@@ -1,63 +1,62 @@
 package ru.clevertec.motor_show.service.impl;
 
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import ru.clevertec.motor_show.factory.CarShowroomFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.clevertec.motor_show.dto.CarShowroomRequestDto;
+import ru.clevertec.motor_show.dto.CarShowroomResponseDto;
+import ru.clevertec.motor_show.error_handling.exception.CarShowroomNotFoundException;
+import ru.clevertec.motor_show.mapper.CarShowroomMapper;
 import ru.clevertec.motor_show.model.CarShowroom;
+import ru.clevertec.motor_show.repository.CarShowroomRepository;
 import ru.clevertec.motor_show.service.CarShowroomService;
-import ru.clevertec.motor_show.util.HibernateUtil;
 
-import java.util.List;
+import java.util.Optional;
 
+import static ru.clevertec.motor_show.constant.ExceptionAnswer.CAR_SHOWROOM_NOT_FOUND;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class CarShowroomServiceImpl implements CarShowroomService {
+    private final CarShowroomRepository carShowroomRepository;
+    private final CarShowroomMapper carShowroomMapper;
+
     @Override
-    public void addCarShowroom() {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            CarShowroom carShowroom = CarShowroomFactory.getCarShowroom();
-            session.save(carShowroom);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
+    public CarShowroomResponseDto createCarShowroom(CarShowroomRequestDto carShowroomRequestDto) {
+        CarShowroom carShowroom = carShowroomMapper.carShowroomRequestDtoToCarShowroom(carShowroomRequestDto);
+        CarShowroom savedCarShowroom = carShowroomRepository.save(carShowroom);
+        log.debug("CarShowroom with id {} is saved", savedCarShowroom.getId());
+        return carShowroomMapper.carShowroomToCarShowroomResponseDto(savedCarShowroom);
+    }
+
+    @Override
+    public void delete(Long id) {
+        if (carShowroomRepository.existsById(id)) {
+            CarShowroom deletedCarShowroom = findCarShowroomByIdOrThrow(id);
+            carShowroomRepository.deleteById(id);
+            log.debug("CarShowroom with id {} is deleted", id);
+        } else {
+            log.error("CarShowroom with id {} not found", id);
+            throw new CarShowroomNotFoundException(String.format(CAR_SHOWROOM_NOT_FOUND, id));
         }
     }
 
     @Override
-    public void removeCarShowroom(Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            session.delete(session.get(CarShowroom.class, id));
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public CarShowroomResponseDto updateCarShowroom(CarShowroomRequestDto carShowroomRequestDto, Long id) {
+        CarShowroom carShowroom = findCarShowroomByIdOrThrow(id);
+        Optional.ofNullable(carShowroomRequestDto.getName()).ifPresent(carShowroom::setName);
+        Optional.ofNullable(carShowroomRequestDto.getAddress()).ifPresent(carShowroom::setAddress);
+        carShowroomRepository.save(carShowroom);
+        return carShowroomMapper.carShowroomToCarShowroomResponseDto(carShowroom);
     }
 
-    @Override
-    public void updateCarShowroom(CarShowroom carShowroomUpdate, Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            CarShowroom carShowroom = session.get(CarShowroom.class, id);
-            carShowroom.setName(carShowroomUpdate.getName());
-            carShowroom.setAddress(carShowroomUpdate.getAddress());
-            session.update(carShowroom);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void findAllCarShowrooms() {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            List<CarShowroom> carShowrooms = session.createQuery("from CarShowroom").list();
-            for (CarShowroom carShowroom : carShowrooms) {
-                System.out.println(carShowroom.getName());
-            }
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private CarShowroom findCarShowroomByIdOrThrow(Long carShowroomId) {
+        return carShowroomRepository.findById(carShowroomId).orElseThrow(() -> {
+            log.error("CarShowroom with id {} not found", carShowroomId);
+            return new CarShowroomNotFoundException(String.format(CAR_SHOWROOM_NOT_FOUND, carShowroomId));
+        });
     }
 }
