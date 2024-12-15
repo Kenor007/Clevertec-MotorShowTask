@@ -1,11 +1,12 @@
 package ru.clevertec.motor_show.service;
 
-import ru.clevertec.motor_show.model.Client;
+import ru.clevertec.motor_show.dto.ClientRequestDto;
+import ru.clevertec.motor_show.dto.ClientResponseDto;
 
 public interface ClientService {
-    void createClient();
+    ClientResponseDto createClient(ClientRequestDto clientRequestDto);
 
-    void updateClient(Client clientUpdate, Long id);
+    ClientResponseDto updateClient(ClientRequestDto clientRequestDto, Long id);
 
     void deleteClient(Long id);
 

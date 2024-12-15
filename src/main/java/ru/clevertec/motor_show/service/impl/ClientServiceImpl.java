@@ -1,74 +1,78 @@
 package ru.clevertec.motor_show.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import ru.clevertec.motor_show.factory.ClientFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.clevertec.motor_show.dto.ClientRequestDto;
+import ru.clevertec.motor_show.dto.ClientResponseDto;
+import ru.clevertec.motor_show.error_handling.exception.CarNotFoundException;
+import ru.clevertec.motor_show.error_handling.exception.ClientNotFoundException;
+import ru.clevertec.motor_show.mapper.ClientMapper;
 import ru.clevertec.motor_show.model.Car;
 import ru.clevertec.motor_show.model.Client;
+import ru.clevertec.motor_show.repository.CarRepository;
+import ru.clevertec.motor_show.repository.ClientRepository;
 import ru.clevertec.motor_show.service.ClientService;
-import ru.clevertec.motor_show.util.HibernateUtil;
 
-import java.util.List;
+import java.util.Optional;
 
+import static ru.clevertec.motor_show.constant.ExceptionAnswer.CAR_NOT_FOUND;
+import static ru.clevertec.motor_show.constant.ExceptionAnswer.CLIENT_NOT_FOUND;
+
+@Service
 @RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class ClientServiceImpl implements ClientService {
+    private final ClientRepository clientRepository;
+    private final CarRepository carRepository;
+    private final ClientMapper clientMapper;
+
+
     @Override
-    public void createClient() {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Client client = ClientFactory.createClient();
-            session.save(client);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public ClientResponseDto createClient(ClientRequestDto clientRequestDto) {
+        Client client = clientMapper.clientRequestDtoToClient(clientRequestDto);
+        Client savedClient = clientRepository.save(client);
+        log.debug("Client with id {} is saved", savedClient.getId());
+        return clientMapper.clientToClientResponseDto(savedClient);
     }
 
     @Override
-    public void updateClient(Client clientUpdate, Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Client client = session.get(Client.class, id);
-            client.setName(clientUpdate.getName());
-            client.setContact(clientUpdate.getContact());
-            session.update(client);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+    public ClientResponseDto updateClient(ClientRequestDto clientRequestDto, Long id) {
+        Client client = findClientByIdOrThrow(id);
+        Optional.ofNullable(clientRequestDto.getName()).ifPresent(client::setName);
+        Optional.ofNullable(clientRequestDto.getContact()).ifPresent(client::setContacts);
+        Client savedClient = clientRepository.save(client);
+        return clientMapper.clientToClientResponseDto(savedClient);
     }
 
     @Override
     public void deleteClient(Long id) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Client client = session.get(Client.class, id);
-            session.delete(client);
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (clientRepository.existsById(id)) {
+            Client deletedClient = findClientByIdOrThrow(id);
+            clientRepository.deleteById(id);
+            log.debug("Client with id {} is deleted", id);
+        } else {
+            log.error("Client with id {} not found", id);
+            throw new ClientNotFoundException(String.format(CLIENT_NOT_FOUND, id));
         }
     }
 
     @Override
     public void buyCar(Long clientId, Long carId) {
-        try (Session session = HibernateUtil.getSession()) {
-            Transaction tx = session.beginTransaction();
-            Client client = session.get(Client.class, clientId);
-            Car car = session.get(Car.class, carId);
-            car.setShowroom(null);
-            List<Car> cars = List.of(car);
-            List<Client> clients = List.of(client);
-            client.setCars(cars);
-            car.setClientas(clients);
-            session.update(client);
-            session.update(car);
+        Client client = findClientByIdOrThrow(clientId);
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new CarNotFoundException(String.format(CAR_NOT_FOUND, carId)));
+        log.error("Car not found with id {}", carId);
+        client.getCars().add(car);
+        clientRepository.save(client);
+    }
 
-            tx.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private Client findClientByIdOrThrow(Long clientId) {
+        return clientRepository.findById(clientId).orElseThrow(() -> {
+            log.error("Client with id {} not found", clientId);
+            return new ClientNotFoundException(String.format(CLIENT_NOT_FOUND, clientId));
+        });
     }
 }
