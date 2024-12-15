@@ -54,8 +54,8 @@ public class CarController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
-                                                      @Validated @RequestBody CarRequestDto carRequestDto) {
+    public ResponseEntity<Map<String, Object>> updateCar(@PathVariable Long id,
+                                                         @Validated @RequestBody CarRequestDto carRequestDto) {
         CarResponseDto carResponseDto = carService.updateCar(carRequestDto, id);
 
         Map<String, Object> response = new HashMap<>();

@@ -43,6 +43,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
     implementation 'org.liquibase:liquibase-core:4.30.0'
     implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+    implementation 'org.yaml:snakeyaml:2.3'
 
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
     compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.34'

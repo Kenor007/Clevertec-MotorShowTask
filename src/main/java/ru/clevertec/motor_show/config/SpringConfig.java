@@ -19,13 +19,14 @@ import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import ru.clevertec.motor_show.util.YamlPropertyLoader;
 
 import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
 @ComponentScan("ru.clevertec")
-@PropertySource("classpath:application.yml")
+@PropertySource(value = "classpath:application.yml", factory = YamlPropertyLoader.class)
 @EnableTransactionManagement
 @EnableJpaRepositories("ru.clevertec.repository")
 @RequiredArgsConstructor
@@ -36,10 +37,10 @@ public class SpringConfig implements WebMvcConfigurer {
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(environment.getRequiredProperty("driver-class-name"));
-        dataSource.setUrl(environment.getRequiredProperty("url"));
-        dataSource.setUsername(environment.getRequiredProperty("username"));
-        dataSource.setPassword(environment.getRequiredProperty("password"));
+        dataSource.setDriverClassName(environment.getRequiredProperty("datasource.driver-class-name"));
+        dataSource.setUrl(environment.getRequiredProperty("datasource.url"));
+        dataSource.setUsername(environment.getRequiredProperty("datasource.username"));
+        dataSource.setPassword(environment.getRequiredProperty("datasource.password"));
         return dataSource;
     }
 
@@ -48,11 +49,9 @@ public class SpringConfig implements WebMvcConfigurer {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(dataSource());
         emf.setPackagesToScan("ru.clevertec");
-        emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-        Properties props = new Properties();
-        props.setProperty("hibernate.hbm2ddl.auto", "update");
-        props.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        emf.setJpaProperties(props);
+        final HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        emf.setJpaVendorAdapter(vendorAdapter);
+        emf.setJpaProperties(hibernateProperties());
         return emf;
     }
 
@@ -74,5 +73,12 @@ public class SpringConfig implements WebMvcConfigurer {
         resolver.setPrefix("/WEB-INF/views/");
         resolver.setSuffix(".jsp");
         return resolver;
+    }
+
+    private Properties hibernateProperties() {
+        Properties properties = new Properties();
+        properties.put("hibernate.dialect", environment.getRequiredProperty("hibernate.dialect"));
+        properties.put("hibernate.show_sql", environment.getRequiredProperty("hibernate.show-sql"));
+        return properties;
     }
 }

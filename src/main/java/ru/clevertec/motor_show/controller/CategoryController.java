@@ -34,7 +34,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
+    public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
         try {
             categoryService.deleteCategory(id);
             return ResponseEntity.ok("Category successfully deleted with id: " + id);
@@ -44,8 +44,8 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
-                                                      @Validated @RequestBody CategoryRequestDto categoryRequestDto) {
+    public ResponseEntity<Map<String, Object>> updateCategory(@PathVariable Long id,
+                                                              @Validated @RequestBody CategoryRequestDto categoryRequestDto) {
         CategoryResponseDto categoryResponseDto = categoryService.updateCategory(categoryRequestDto, id);
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Category successfully updated.");

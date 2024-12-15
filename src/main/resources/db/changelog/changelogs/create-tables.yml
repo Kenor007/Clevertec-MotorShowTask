@@ -1,0 +1,230 @@
+tag: MAJOR
+name: create tables for motor_show_db
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Evgeniy Kanareikin
+      changes:
+        - createTable:
+            tableName: cars
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: model
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: brand_car
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: year_of_production
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: car_showroom_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 2
+      author: Evgeniy Kanareikin
+      changes:
+        - createTable:
+            tableName: car_showrooms
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 3
+      author: Evgeniy Kanareikin
+      changes:
+        - createTable:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name_category_car
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 4
+      author: Evgeniy Kanareikin
+      changes:
+        - createTable:
+            tableName: clients
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_of_registration
+                  type: date
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 5
+      author: Evgeniy Kanareikin
+      changes:
+        - createTable:
+            tableName: reviews
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: review_text
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rank
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: cars_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clients_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 6
+      author: Evgeniy Kanareikin
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: cars
+            baseColumnNames: car_showroom_id
+            referencedTableName: car_showrooms
+            referencedColumnNames: id
+            constraintName: fk_cars_showroom
+
+  - changeSet:
+      id: 7
+      author: Evgeniy Kanareikin
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: cars
+            baseColumnNames: category_id
+            referencedTableName: categories
+            referencedColumnNames: id
+            constraintName: fk_cars_category
+
+  - changeSet:
+      id: 8
+      author: Evgeniy Kanareikin
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: reviews
+            baseColumnNames: client_id
+            referencedTableName: clients
+            referencedColumnNames: id
+            constraintName: fk_reviews_client
+
+  - changeSet:
+      id: 9
+      author: Evgeniy Kanareikin
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: reviews
+            baseColumnNames: cars_id
+            referencedTableName: cars
+            referencedColumnNames: id
+            constraintName: fk_reviews_car
+
+  - changeSet:
+      id: 10
+      author: Evgeniy Kanareikin
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: reviews
+            baseColumnNames: clients_id
+            referencedTableName: clients
+            referencedColumnNames: id
+            constraintName: fk_reviews_clients
+
+  - changeSet:
+      id: 11
+      author: Evgeniy Kanareikin
+      changes:
+        - createTable:
+            tableName: client_contacts
+            columns:
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contacts
+                  type: varchar(255)
+                  constraints:
+                    nullable: false

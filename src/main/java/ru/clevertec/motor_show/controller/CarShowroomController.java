@@ -35,7 +35,7 @@ public class CarShowroomController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
+    public ResponseEntity<String> deleteCarShowroom(@PathVariable Long id) {
         try {
             showroomService.delete(id);
             return ResponseEntity.ok("CarShowroom successfully deleted with id: " + id);
@@ -45,8 +45,8 @@ public class CarShowroomController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
-                                                      @Validated @RequestBody CarShowroomRequestDto carShowroomRequestDto) {
+    public ResponseEntity<Map<String, Object>> updateCarShowroom(@PathVariable Long id,
+                                                                 @Validated @RequestBody CarShowroomRequestDto carShowroomRequestDto) {
         CarShowroomResponseDto carShowroomResponseDto = showroomService.updateCarShowroom(carShowroomRequestDto, id);
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Car showroom successfully updated.");

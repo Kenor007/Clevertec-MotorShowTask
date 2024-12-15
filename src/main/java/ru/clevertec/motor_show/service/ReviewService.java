@@ -1,11 +1,12 @@
 package ru.clevertec.motor_show.service;
 
+import ru.clevertec.motor_show.dto.ReviewRequestDto;
+import ru.clevertec.motor_show.dto.ReviewResponseDto;
+
 public interface ReviewService {
-    void addReview(Long clientId, Long cardId);
+    ReviewResponseDto createReview(ReviewRequestDto reviewRequestDto, Long clientId, Long carId);
 
     void deleteReview(Long id);
 
-    void updateReview(Long id);
-
-    void searchReviewsByKeywords(String keywords);
+    ReviewResponseDto updateReview(ReviewRequestDto reviewRequestDto, Long id);
 }

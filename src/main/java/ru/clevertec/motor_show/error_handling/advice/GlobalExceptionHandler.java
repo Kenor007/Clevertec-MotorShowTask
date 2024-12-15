@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.clevertec.motor_show.error_handling.exception.CarNotFoundException;
 import ru.clevertec.motor_show.error_handling.exception.CarShowroomNotFoundException;
 import ru.clevertec.motor_show.error_handling.exception.CategoryNotFoundException;
+import ru.clevertec.motor_show.error_handling.exception.ClientNotFoundException;
 import ru.clevertec.motor_show.error_handling.exception.ErrorDetails;
+import ru.clevertec.motor_show.error_handling.exception.ReviewNotFoundException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,13 +40,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ClientNotFoundException.class)
+    public ResponseEntity<Object> handleClientNotFoundException(ClientNotFoundException exception) {
+        ErrorDetails errorDetails = new ErrorDetails(HttpStatus.NOT_FOUND, exception.getMessage(), "Client not found");
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<Object> handleReviewNotFoundException(ReviewNotFoundException exception) {
+        ErrorDetails errorDetails = new ErrorDetails(HttpStatus.NOT_FOUND, exception.getMessage(), "Review not found");
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleUnknownException(Exception exception) {
         ErrorDetails errorDetails = new ErrorDetails(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), "Unknown internal server error.");
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException exception) {
